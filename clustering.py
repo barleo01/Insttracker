@@ -23,12 +23,18 @@ ax.add_patch(rect)
 #putting numpy array in shape so that x,y is in it
 data = np.copy(img)
 h,w,_ = np.shape(img)
+
 indices = np.reshape([(i,j) for i in range(h) for j in range(w)],(h,w,2))
-print(np.shape(indices))
 
 data = np.concatenate((data, indices), axis = 2)
-print(data[360,0])
+print(np.linalg.norm(data[363,197] - data[373,202]))
+data = np.reshape(data, (h*w,5))
+print(np.shape(data))
 
-plt.imshow(img)
+#segmentation
+db = DBSCAN(eps=30).fit(data)
+labels = np.reshape(db.labels_, (h,w))
+
+plt.imshow(labels)
 plt.show()
 
