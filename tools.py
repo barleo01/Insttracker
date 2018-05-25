@@ -25,7 +25,7 @@ def ImgProcessing(img, index):
     #img = exposure.equalize_hist(img)
     
     # 1. FILTER
-    img = flt.gaussian(img)
+    #img = flt.gaussian(img)
     
     # CANNY EDGE DETECTION
     mask = feature.canny(img, sigma=0.3)#dtype=bool)    
@@ -33,7 +33,7 @@ def ImgProcessing(img, index):
     img[mask==True] = 0
     
     # 2. FILTER
-    img = flt.gaussian(img)
+    img = flt.gaussian(img, sigma=1)
     
 
     return img
@@ -41,5 +41,12 @@ def ImgProcessing(img, index):
 
 def Match(Searchingzone, template):
     match = match_template(Searchingzone, template)
+    #new center of object calculation
+    ij = np.unravel_index(np.argmax(match), match.shape)
     
-    return match
+    #corr = template*template
+      
+
+
+    
+    return ij
