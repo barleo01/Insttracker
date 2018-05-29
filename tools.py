@@ -1,5 +1,10 @@
 """ 
-Contains functions that are mainly used in all exercises of HW2
+Tools functions used in group project "Instrument Tracker" in course
+"Introduction to Signal and Image Processing" at Unibe
+
+Authors :
+    Leonard Barras
+    Maxime Piergiovanni
 """
 
 # Imports
@@ -7,17 +12,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.color import rgb2gray
 from skimage import filters as flt
-from skimage.io import imread
 from skimage import feature
-from skimage import exposure
 from skimage.feature import match_template
 import skimage as sk
-from matplotlib.patches import Circle
-import tools as tls
 
-from scipy.signal import convolve2d as conv2
 from skimage.segmentation import slic
-from skimage.exposure import equalize_hist, equalize_adapthist
 
 from sklearn.cluster import KMeans
 
@@ -42,10 +41,7 @@ def ImgCannyGaussian(img):
     return mask
 
 
-def Match(Searchingzone, template, index, xy):
-   
-    ListCorr = []
-    
+def Match(Searchingzone, template, index, xy):    
     templatebinary = np.full((template.shape[0], template.shape[1]), False)
     templatebinary[template>0.1] = True
     template = templatebinary
@@ -74,25 +70,12 @@ def Match(Searchingzone, template, index, xy):
             #----------------------------------------------------------
             # SCORE
             #----------------------------------------------------------
-            '''
-            match = Searchwindow&template
-            score = np.sum(match.flatten()) #number of pixels
-            sizeSearchwindow = np.sum(Searchwindow.flatten())
-            #match[template==True and Corr==True] = True
-            score = score - sizeSearchwindow/7
-            '''
+
             diff = sk.img_as_ubyte(template)/255-(sk.img_as_ubyte(Searchwindow)/255)*1.5
             sum_template = diff[diff==1].size
             sum_window = diff[diff==-1.5].size
             sum_both = diff[diff==-0.5].size
             sum_none = diff[diff==0].size
-            
-            '''
-            both = np.full((Searchwindow.shape[0], Searchwindow.shape[1]), False)
-            mask = template & Searchingzone
-            both[template==True] = True
-            sum_both = both[both==True].size
-            '''
             
             score = sum_both- 0.8 *sum_window
             #---------------------------------------------------------
@@ -100,15 +83,9 @@ def Match(Searchingzone, template, index, xy):
             if score>=best_score:
                 best_score = score
                 ij = (i-int(template.shape[0]/2),j-int(template.shape[0]/2))
-            #ListCorr.append(match)
             
     print('score: ' + str(best_score))
-       
-    if index>0:
-       print('diff')
-       plt.imshow(diff)
-       plt.show()
-    
+        
     if best_score<100:
         return xy
     return ij
@@ -116,6 +93,7 @@ def Match(Searchingzone, template, index, xy):
 def Match_(Searchingzone, template):
     match = match_template(Searchingzone, template)
     #new center of object calculation
+    #match = np.reshape(match,np.shape(match)[:2])
     ij = np.unravel_index(np.argmax(match), match.shape)
     
     return ij
@@ -132,7 +110,7 @@ def maskKMeans(img):
       
     data = np.reshape(data,(h*w,3))
     #segmentation
-    kmeans = KMeans(n_clusters = 3).fit(data) 
+    kmeans = KMeans(n_clusters = 2).fit(data) 
     #db = DBSCAN(eps=30).fit(data)
     labels = np.reshape(kmeans.labels_, (h,w))
     #mask that only sets only pixels of same cluster as point

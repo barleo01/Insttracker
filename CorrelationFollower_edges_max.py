@@ -19,7 +19,7 @@ import tools as tls
 
 
 nbreimage = 50
-Set = 'A'
+Set = 'B'
 
 
 if Set=='A':
@@ -42,7 +42,6 @@ templatesize = 30 # edge size
 searchingsize = 70 # edge size
 Frame = imread(folder + filenamestart + str(imagename_first) + '.png')
 index = 1
-
 
 for i in range (imagename_first, imagename_last):
     
@@ -73,20 +72,22 @@ for i in range (imagename_first, imagename_last):
     combinedMask = wCanny * cannyMask + wCluster * clusteredMask
     combinedMask = combinedMask / np.max(combinedMask)
     
+    combinedMask = np.logical_or(clusteredMask, cannyMask)
+    
     template[:,:,0] = np.multiply (template[:,:,0], combinedMask)
     template[:,:,1] = np.multiply (template[:,:,1], combinedMask)
     template[:,:,2] = np.multiply (template[:,:,2], combinedMask)
     
     
-    plt.subplot('221')
-    plt.imshow(combinedMask)
-    plt.subplot('222')
-    plt.imshow(SearchingZone)
-    plt.subplot('223')
-    plt.imshow(template)
-    plt.subplot('224')
-    plt.imshow(cannyMask)
-    plt.show()
+    #plt.subplot('221')
+    #plt.imshow(combinedMask)
+    #plt.subplot('222')
+    #plt.imshow(SearchingZone)
+    #plt.subplot('223')
+    #plt.imshow(template)
+    #plt.subplot('224')
+    #plt.imshow(clusteredMask)
+    #plt.show()
     #fit template on next frame
     ij = tls.Match_(SearchingZone, template)#, pad_input = True) 
  
