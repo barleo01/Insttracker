@@ -19,6 +19,8 @@ from scipy.signal import convolve2d as conv2
 from skimage.segmentation import slic
 from skimage.exposure import equalize_hist, equalize_adapthist
 
+from sklearn.cluster import KMeans
+
 
 def ImgSegmentation(img,index):
     segments = slic(img, n_segments=500)
@@ -28,38 +30,16 @@ def ImgSegmentation(img,index):
     print('debug')
     
 
-def ImgProcessing(img, index):
-    
-    #img = equalize_adapthist(img)
-    
-    #red = img[:,:,0]
-    #blue = img[:,:,1] 
-    #green = img[:,:,2] 
-    
-    img = rgb2gray(img)
-    #img = green
-    #img = exposure.equalize_hist(img)
-    
-    # 1. FILTER
-    #img = flt.gaussian(img, sigma=1.2)
-    
+def ImgCannyGaussian(img):  
+    mask = rgb2gray(img)
+
     # CANNY EDGE DETECTION
-    mask = feature.canny(img, sigma=1)#dtype=bool)    
-    #mask = np.logical_or(mask, feature.canny(blue, sigma=1))
-    #mask = np.logical_or(mask, feature.canny(green, sigma=1))
-    #img = np.ones((img.shape[0],img.shape[1]))*255
-    img[mask==False] = 0
-    img[mask==True] = 255
+    mask = feature.canny(mask, sigma=1)#dtype=bool)    
     
     # 2. FILTER
-    
-    #filt = np.ones((5, 5)) / 25
-    #img = conv2(img, filt, 'same')
-    
-    img = flt.gaussian(img, sigma=1)
-    
-
-    return img
+  
+    mask = flt.gaussian(mask, sigma=1) * 2.0
+    return mask
 
 
 def Match(Searchingzone, template, index, xy):
@@ -133,9 +113,29 @@ def Match(Searchingzone, template, index, xy):
         return xy
     return ij
 
-def Match_(Searchingzone, template, index):
+def Match_(Searchingzone, template):
     match = match_template(Searchingzone, template)
     #new center of object calculation
     ij = np.unravel_index(np.argmax(match), match.shape)
     
     return ij
+
+def write_results(listpos, filename = "results.txt"):
+    with open(filename, 'w') as f:
+        for file, pos_x, pos_y in listpos:
+            f.write("{0} {1} {2}\n".format(file,pos_x,pos_y))
+
+def maskKMeans(img):
+    #putting numpy array in shape so that x,y is in it
+    data = np.copy(img)
+    h,w,_ = np.shape(img)
+      
+    data = np.reshape(data,(h*w,3))
+    #segmentation
+    kmeans = KMeans(n_clusters = 3).fit(data) 
+    #db = DBSCAN(eps=30).fit(data)
+    labels = np.reshape(kmeans.labels_, (h,w))
+    #mask that only sets only pixels of same cluster as point
+    clusterFilter = np.vectorize( lambda x: 1. if x == labels[h//2, w//2] else 0.)
+    mask = clusterFilter(labels)
+    return mask

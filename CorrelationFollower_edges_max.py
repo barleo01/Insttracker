@@ -17,8 +17,9 @@ from skimage.feature import match_template
 from matplotlib.patches import Circle
 import tools as tls
 
+
 nbreimage = 50
-Set = 'B'
+Set = 'A'
 
 
 if Set=='A':
@@ -45,7 +46,7 @@ index = 1
 
 for i in range (imagename_first, imagename_last):
     
-    print(str(index) + ' : ' + filenamestart + str(i) + '.png')
+    print(filenamestart + str(i) + '.png')
     
     #newFrame = np.asarray(newFrame)
     
@@ -63,11 +64,31 @@ for i in range (imagename_first, imagename_last):
                           center[0]-searchingsize:center[0]+searchingsize,:]
     
     #processing
-    template = tls.ImgCannyGaussian(template)
-    SearchingZone = tls.ImgCannyGaussian(SearchingZone)
+    clusteredMask = tls.maskKMeans(template)
+    cannyMask = tls.ImgCannyGaussian(template)
     
+    #multiplying filter
+    wCanny = 1.0
+    wCluster = 1.0
+    combinedMask = wCanny * cannyMask + wCluster * clusteredMask
+    combinedMask = combinedMask / np.max(combinedMask)
+    
+    template[:,:,0] = np.multiply (template[:,:,0], combinedMask)
+    template[:,:,1] = np.multiply (template[:,:,1], combinedMask)
+    template[:,:,2] = np.multiply (template[:,:,2], combinedMask)
+    
+    
+    plt.subplot('221')
+    plt.imshow(combinedMask)
+    plt.subplot('222')
+    plt.imshow(SearchingZone)
+    plt.subplot('223')
+    plt.imshow(template)
+    plt.subplot('224')
+    plt.imshow(cannyMask)
+    plt.show()
     #fit template on next frame
-    ij = tls.Match(SearchingZone, template, index, ij)#, pad_input = True) 
+    ij = tls.Match_(SearchingZone, template)#, pad_input = True) 
  
 
     #i, j = ij[::-1]
@@ -75,10 +96,9 @@ for i in range (imagename_first, imagename_last):
     
     #nextFrame[ij[0],ij[1]] = (255,0,0)
     print('Center: '+ str(center))
+    print('Center: '+ str(center))
     fig,ax = plt.subplots(1)
     ax.imshow(Frame)
     ax.add_patch(Circle((center[0],center[1]),5, linestyle='solid', edgecolor='r', facecolor='none'))
     ax.add_patch(Circle((centerorgin[0],centerorgin[1]),5, linestyle='solid', edgecolor='b', facecolor='none'))
     plt.show()
-    
-    index += 1
